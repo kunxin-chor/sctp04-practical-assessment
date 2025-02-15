@@ -141,6 +141,49 @@ async function main() {
         res.redirect("/employees");
     })
 
+    // we must generalize this route so that it works for any employee
+    // therefore we need to know which employee is being deleted
+    // --> route parameter
+    app.get('/employees/:employee_id/delete', async function(req,res){
+        try {
+            const employeeId = req.params.employee_id;
+            const results = await connection.execute(`
+                SELECT * FROM Employees WHERE employee_id = ?
+            `, [employeeId])
+    
+            // even when the results only has one row, it still be an array
+            // that is, employees will be an array of one result
+            const employees = results[0];
+    
+            const employeeToDelete = employees[0];
+            
+    
+            res.render('delete-employee', {
+                "employee": employeeToDelete
+            })
+        } catch (e) {
+            res.send("Unable to process delete");
+        }
+       
+    });
+
+    app.post('/employees/:employee_id/delete', async function(req,res){
+        try {
+            const employeeId = req.params.employee_id;
+            const query = `DELETE FROM Employees WHERE employee_id = ?`;
+            await connection.execute(query, [employeeId]);
+            res.redirect('/employees');
+        } catch (e) {
+            console.log(e);
+            res.render("error",{
+                'errorMessage':'Unable to process delete. Contact admin or try again'
+            })
+        }
+ 
+    })
+
+    
+
 }
 main();
 

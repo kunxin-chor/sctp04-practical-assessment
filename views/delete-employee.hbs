@@ -1,0 +1,17 @@
+{{#extends "base"}}
+
+{{#block "content"}}
+<h1>Confirm Delete</h1>
+<form method="POST">
+    <div class="alert alert-danger">
+        Are you sure you want to delete {{employee.first_name}} {{employee.last_name}}?
+        <div>
+            <a href="/employees" class="btn btn-success">Cancel</a>
+            <input type="submit" class="btn btn-danger" value="Delete"/>
+        </div>
+    
+    </div>
+</form>
+{{/block}}
+
+{{/extends}}
