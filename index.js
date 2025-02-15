@@ -3,7 +3,7 @@ const hbs = require('hbs');
 const { createConnection } = require('mysql2/promise');
 
 const wax = require('wax-on'); // <-- template inheritance
-require('dotenv').config();
+require('dotenv').config(); // <-- allow access to the env file
 
 // create an express application
 const app = express();
@@ -26,10 +26,10 @@ async function main() {
     // -> an async operation is one where NodeJS won't wait for it to finish
     // before executing the next line of code
     connection = await createConnection({
-        'host': 'localhost',
-        'user': 'root',
-        'database': 'crm',
-        'password': ''
+        'host': process.env.DB_HOST,
+        'user': process.env.DB_USER,
+        'database': process.env.DB_DATABASE,
+        'password': process.env.DB_PASSWORD
     });  // createConnection takes a long time to finish
     // usually JS will just skip this line and move on to the next
     // but we don't want so we use await to make sure the connection finishes
@@ -82,6 +82,8 @@ async function main() {
     });
 
     app.post('/customers/add', async function(req,res) {
+
+
         // to extract data from a form, we will
         // use the name of the field as a key in req.body
         const firstName = req.body.first_name;
@@ -97,6 +99,46 @@ async function main() {
 
   // tell the browser to go a different URL
         res.redirect("/customers");
+    })
+
+    // app.get -- implies retriving information
+    app.get('/employees', async function(req,res){
+        const results = await connection.execute(`SELECT * FROM Employees 
+              JOIN Departments
+              ON Employees.department_id = Departments.department_id;`);
+        // results will be an array of two elements
+        // but the rows of all employees is in the first element
+        const employees = results[0];
+        console.log(employees);
+        res.render('employees', {
+            "employees":employees,
+        });
+
+    });
+
+    // display the form to create a new employee
+    app.get('/employees/create', async function(req,res){
+        const results = await connection.execute("SELECT * FROM Departments");
+        const departments = results[0];
+
+        res.render('create-employee', {
+            "departments": departments
+        })
+    })
+
+    app.post('/employees/create', async function(req,res){
+        
+        const firstName = req.body.first_name;
+        const lastName = req.body.last_name;
+        const departmentId  = req.body.department_id;
+
+        const sql = `INSERT INTO Employees (first_name, last_name, department_id)
+ VALUES (?, ?, ?);
+        `
+        const bindings = [firstName, lastName, departmentId]
+
+        await connection.execute(sql, bindings);
+        res.redirect("/employees");
     })
 
 }
